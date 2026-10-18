@@ -1,5 +1,3 @@
----
-
 # ALAN: Your Self-Hosted Air-Gapped AI Cloud & Cybersecurity Auditor
 
 > An enterprise-grade, 100% air-gapped security posture management and automated remediation system powered by hybrid GraphRAG, Model Context Protocol (FastMCP), and fine-tuned open-weights models served via vLLM.
