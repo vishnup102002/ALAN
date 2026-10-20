@@ -62,6 +62,22 @@ def run_trivy_scan(target_path: str=".")->str:
     except Exception as ex:
         return json.dumps({"error": str(ex)}, indent=2)
 
+@mcp.tool()
+def run_checkov_scan(target_path: str=".")->str:
+    """Runs a local Checkov IaC security and compliance scan against CIS benchmarks and returns JSON findings."""
+    try:
+        # Checkov outputs JSON and returns exit code 1 if failures/violations are found
+        cmd=["checkov","-d",target_path,"--output","json","--quiet"]
+        result=subprocess.run(cmd,capture_output=True,check=True)
+        output_to_parse=result.stdout if result.stdout else result.stderr
+        scan_data = json.loads(output_to_parse)
+        return json.dumps(scan_data, indent=2)
+    except json.JSONDecodeError:
+        return json.dumps({"error": "Failed to parse Checkov output as JSON", "stdout": result.stdout, "stderr": result.stderr}, indent=2)
+    except Exception as ex:
+        return json.dumps({"error": str(ex)}, indent=2)
+
+
 if __name__=="__main__":
     mcp.run()
     
