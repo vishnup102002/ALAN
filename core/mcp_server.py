@@ -1,5 +1,7 @@
+from asyncio import subprocess
 from neo4j._async.work import result
 import os
+import json
 from mcp.server.fastmcp import FastMCP
 from neo4j import GraphDatabase
 from dotenv import load_dotenv
@@ -45,6 +47,20 @@ def list_cloud_assets() -> str:
             return "The graph database is currently empty."
         return "Ingested Cloud Assets:\n" + "\n".join(assets)
 
+@mcp.tool()
+def run_trivy_scan(target_path: str=".")->str:
+    """Runs a local Trivy filesystem vulnerability scan on the specified target path and returns JSON findings."""
+    try:
+        cmd=["trivy","fs","--format","json","--quiet",target_path]    
+        result=subprocess.run(cmd,capture_output=True,text=True,check=True)
+        scan_data=json.loads(result.stdout)
+        return json.dumps(scan_data, indent=2)
+    except subprocess.CalledProcessError as e:
+        return json.dumps({"error": "Trivy scan failed", "details": e.stderr}, indent=2)
+    except json.JSONDecodeError:
+        return json.dumps({"error": "Failed to parse Trivy output as JSON", "raw_output": result.stdout}, indent=2)
+    except Exception as ex:
+        return json.dumps({"error": str(ex)}, indent=2)
 
 if __name__=="__main__":
     mcp.run()

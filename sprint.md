@@ -29,12 +29,12 @@
 * **Objective:** Expand open-source security CLI tools into standardized Model Context Protocol (FastMCP) endpoints and validate local execution.
 * **Duration:** 3–4 Days
 
-| Task ID        | Task Description                                                                                                                     | Deliverable / Output                           |
-| :------------- | :----------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------- |
-| **T2.1** | Install local security CLI scanners (`Trivy` for vulnerabilities, `Checkov` for IaC static compliance) in the local environment. | Working CLI command line binaries.             |
-| **T2.2** | Implement MCP tool wrapper for Trivy filesystem scans to output clean JSON findings.                                                 | Functional `run_trivy_scan` tool endpoint.   |
-| **T2.3** | Implement MCP tool wrapper for Checkov compliance checks against CIS benchmarks.                                                     | Functional `run_checkov_scan` tool endpoint. |
-| **T2.4** | Wire FastMCP server to local Claude Desktop via `claude_desktop_config.json` for manual tool verification.                         | End-to-end verified local MCP setup.           |
+| Task ID        | Task Description                                                                                                                     | Deliverable / Output                            |
+| :------------- | :----------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------- |
+| **T2.1** | Install local security CLI scanners (`Trivy` for vulnerabilities, `Checkov` for IaC static compliance) in the local environment. | Working CLI command line binaries.<br />Done ✅ |
+| **T2.2** | Implement MCP tool wrapper for Trivy filesystem scans to output clean JSON findings.                                                 | Functional `run_trivy_scan` tool endpoint.    |
+| **T2.3** | Implement MCP tool wrapper for Checkov compliance checks against CIS benchmarks.                                                     | Functional `run_checkov_scan` tool endpoint.  |
+| **T2.4** | Wire FastMCP server to local Claude Desktop via `claude_desktop_config.json` for manual tool verification.                         | End-to-end verified local MCP setup.            |
 
 ---
 
