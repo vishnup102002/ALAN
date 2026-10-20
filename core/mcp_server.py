@@ -1,4 +1,4 @@
-from asyncio import subprocess
+import subprocess
 from neo4j._async.work import result
 import os
 import json
@@ -15,7 +15,7 @@ if not PASSWORD or not URI or not USER:
 
 mcp=FastMCP("ALAN Security Auditor")
 def get_neo4j_driver():
-    return GraphDatabase(URI,auth=(USER,PASSWORD))
+    return GraphDatabase.driver(URI, auth=(USER, PASSWORD))
 @mcp.tool()
 def audit_attack_paths() -> str:
     """Queries the local Neo4j graph for multi-hop attack paths involving internet-exposed EC2 instances and public S3 buckets."""
@@ -34,14 +34,19 @@ def audit_attack_paths() -> str:
 @mcp.tool()
 def list_cloud_assets() -> str:
     """Lists all assets currently ingested in the air-gapped ALAN Neo4j graph database."""
-    query="""
+    query = """
     MATCH (n)
-    RETURN labels(n) AS assets_type, n.name AS name
+    RETURN labels(n) AS labels_list, n.name AS name
     """
-    driver=get_neo4j_driver()
-    with driver.session as session:
-        result=session.run(query)
-        assets = [f"[{record['asset_type'][0]}] {record['name']}" for record in result]
+    driver = get_neo4j_driver()
+    with driver.session() as session:
+        result = session.run(query)
+        assets = []
+        for record in result:
+            labels = record.get("labels_list", ["Unknown"])
+            label_str = labels[0] if labels else "Unknown"
+            name = record.get("name", "Unnamed Asset")
+            assets.append(f"[{label_str}] {name}")
         driver.close()
         if not assets:
             return "The graph database is currently empty."
