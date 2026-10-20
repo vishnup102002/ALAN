@@ -1,7 +1,7 @@
 import os
 from neo4j import GraphDatabase
 from dotenv import load_dotenv
-
+import yaml
 load_dotenv()
 
 URI=os.getenv("NEO4J_URI")
@@ -18,32 +18,49 @@ class CloudGraphIngestor:
     def close(self):
         self.driver.close()
 
-    def test_connection(self):
-        with self.driver.session() as session:
-            result=session.run("RETURN 1 AS result")
-            record =result.single()
-            print(f"Neo4j Connection Status: Successful (Test Query Result: {record['result']}")
+    def parse_and_ingest_manifest(self, filepath: str):
+        """Parses an infrastructure YAML manifest and pushes nodes and edges to Neo4j."""
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Manifest not found at {filepath}")
 
-    def create_sample_attack_path(self):
-        """Creates a sample vulnerable cloud topology for ALAN to audit."""
-        query="""
-        MERGE(i:IAMRole {name: 'OverprivilegedLambdaRole'})
-        MERGE (s:S3Bucket {name: 'customer-pii-bucket', public: true})
-        MERGE (ec2:EC2Instance {name: 'web-frontend-server', exposed_to_internet: true})
-        
-        MERGE (i)-[:HAS_ACCESS_TO]->(s)
-        MERGE (ec2)-[:CONNECTS_TO]->(i)
-        
-        RETURN i.name AS role, s.name AS bucket
-         """
+        with open(filepath, "r") as f:
+            data = yaml.safe_load(f)
+
         with self.driver.session() as session:
-            session.run(query)
-            print("Sample attack path topology injected into Neo4j graph!")
-            
+            # Clear previous graph state for clean sync
+            session.run("MATCH (n) DETACH DELETE n")
+
+            for resource in data.get("resources", []):
+                r_type = resource["type"]
+                r_name = resource["name"]
+                r_props = resource.get("properties", {})
+
+                # Dynamic node creation using Cypher parameterization
+                create_query = f"""
+                MERGE (n:{r_type} {{name: $name}} )
+                SET n += $props
+                """
+                session.run(create_query, name=r_name, props=r_props)
+
+                # Process relationships if any
+                for rel in resource.get("relationships", []):
+                    target_name = rel["target"]
+                    rel_type = rel["type"]
+                    
+                    rel_query = f"""
+                    MATCH (source {{name: $source_name}})
+                    MATCH (target {{name: $target_name}})
+                    MERGE (source)-[:{rel_type}]->(target)
+                    """
+                    session.run(rel_query, source_name=r_name, target_name=target_name)
+
+        print(f"Successfully parsed manifest from {filepath} and populated Neo4j graph!")
+
 if __name__ == "__main__":
+    print("Initializing ALAN Manifest Parser & Ingestor...")
     ingestor = CloudGraphIngestor(URI, USER, PASSWORD)
     try:
-        ingestor.test_connection()
-        ingestor.create_sample_attack_path()
+        ingestor.parse_and_ingest_manifest("configs/infra_manifest.yaml")
     finally:
         ingestor.close()
+        print("Ingestion complete!")
