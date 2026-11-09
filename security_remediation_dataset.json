@@ -1,0 +1,7 @@
+[
+  {
+    "instruction": "Identify security vulnerabilities in the provided code.",
+    "input": "def login(user, pwd):\n    return query(f'SELECT * FROM users WHERE user={user} AND pwd={pwd}')",
+    "output": "The code contains a SQL Injection vulnerability because input is concatenated directly into the query."
+  }
+]
