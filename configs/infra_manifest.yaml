@@ -1,0 +1,30 @@
+resources:
+  - type: SecurityGroup
+    name: web-sg
+    properties:
+      inbound_port: 80
+      open_to_world: true
+
+  - type: EC2Instance
+    name: web-frontend-server
+    properties:
+      exposed_to_internet: true
+    relationships:
+      - target: web-sg
+        type: PROTECTED_BY
+
+  - type: IAMRole
+    name: OverprivilegedLambdaRole
+    properties:
+      managed_policy: AdministratorAccess
+    relationships:
+      - target: web-frontend-server
+        type: CONNECTS_TO # (or reverse depending on direction)
+
+  - type: S3Bucket
+    name: customer-pii-bucket
+    properties:
+      public: true
+    relationships:
+      - target: OverprivilegedLambdaRole
+        type: HAS_ACCESS_TO
